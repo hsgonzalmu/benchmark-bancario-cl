@@ -1,0 +1,12 @@
+cuenta,nombre,grupo
+100000000,Activos totales,Activos
+105000000,Efectivo y depósitos en bancos,Activos
+144000000,Colocaciones,Colocaciones
+145000000,Colocaciones comerciales,Colocaciones
+146000000,Colocaciones para vivienda,Colocaciones
+148000000,Colocaciones de consumo,Colocaciones
+149000000,Provisiones por riesgo de crédito,Colocaciones
+200000000,Pasivos totales,Pasivos
+241000000,Depósitos a la vista,Captaciones
+242000000,Depósitos a plazo,Captaciones
+300000000,Patrimonio,Patrimonio

@@ -1,0 +1,18 @@
+schema: spec-driven
+
+context: |
+  Language: es
+  All artifacts must be written in es.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Proyecto: apps Shiny en R con chat (ellmer + shinychat), tools y, cuando corresponda, servidores MCP.
+  Guía base: docs/guia-r-shiny-chat.md (léela antes de proponer o implementar).
+  Estilo: líneas de 110 caracteres o menos, R base y pipe nativo |>, sin dependencias innecesarias;
+  cada app se ejecuta de forma independiente desde su carpeta.
+
+rules:
+  specs:
+    - Describe cada tool (nombre, argumentos, qué devuelve y qué cambia en la UI).
+    - Describe el estado reactivo (qué reactiveVal existen y qué tool los modifica).
+    - Incluye escenarios conversacionales (mensaje del usuario → tools invocadas → respuesta/UI).
+  tasks:
+    - Incluye una tarea de verificación que ejecute la app desde su carpeta.

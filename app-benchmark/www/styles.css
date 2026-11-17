@@ -1,0 +1,725 @@
+/* Benchmark bancario Chile: estilos complementarios al tema bslib. */
+
+body {
+  background: #F4F6F9;
+}
+
+.bslib-page-sidebar > .navbar,
+.bslib-page-sidebar .navbar {
+  background: #0B2545 !important;
+  border-bottom: none;
+}
+
+.app-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #FFFFFF;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.bslib-sidebar-layout > .sidebar {
+  background: #FFFFFF;
+}
+
+.sidebar-seccion {
+  margin: 0.25rem 0 0.6rem;
+  color: #5F6B7A;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar-fuente {
+  margin-top: 1rem;
+  color: #8692A0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* encabezado ------------------------------------------------------------ */
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* "BCI | Colocaciones": banco en negrita y cuenta en gris, separados por una línea vertical (borde, no "|",
+   para que quede centrada y del alto del texto). */
+.encabezado-principal {
+  display: flex;
+  align-items: center;
+  column-gap: 0.85rem;
+}
+
+.encabezado-banco {
+  color: #0B2545;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.encabezado-cuenta {
+  min-width: 0;
+  padding-left: 0.85rem;
+  border-left: 2px solid #CDD3DA;
+  color: #5F6B7A;
+  font-size: 1.65rem;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+@media (max-width: 575.98px) {
+  .encabezado-banco,
+  .encabezado-cuenta { font-size: 1.3rem; }
+}
+
+.encabezado-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #DDE3EA;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: #33404D;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.encabezado-alerta {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* value boxes ----------------------------------------------------------- */
+.fila-cajas {
+  margin-bottom: 1rem;
+}
+
+.bslib-value-box.vb {
+  background: #FFFFFF;
+  border: 1px solid #E3E8EE;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.bslib-value-box.vb .value-box-title {
+  margin-bottom: 0.15rem;
+}
+
+.vb-titulo {
+  display: flex;
+  align-items: center;
+  color: #5F6B7A;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vb-banco {
+  display: block;
+  margin-top: 0.15rem;
+  color: #1F2933;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.bslib-value-box.vb {
+  min-height: 0;
+}
+
+.bslib-value-box.vb .value-box-value {
+  margin-bottom: 0.25rem;
+  color: #0B2545;
+  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.vb-nota {
+  margin: 0;
+  color: #5F6B7A;
+  font-size: 0.8rem;
+}
+
+.vb-variacion {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.bslib-value-box.vb .value-box-area {
+  justify-content: flex-start;
+  padding: 0.9rem 0.9rem;
+}
+
+/* chat ------------------------------------------------------------------ */
+.bslib-sidebar-layout > .sidebar .accordion-body {
+  padding: 0.5rem 0.75rem;
+}
+
+shiny-chat-message strong {
+  color: #0B2545;
+}
+
+.bslib-value-box.vb-vacia {
+  border-top: 4px solid #CDD3DA;
+  opacity: 0.75;
+}
+
+.bslib-value-box.vb-vacia .value-box-value {
+  color: #8692A0;
+}
+
+.punto {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+}
+
+/* tarjetas -------------------------------------------------------------- */
+.card {
+  border-color: #E3E8EE;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.card-titulo,
+.card-header.card-titulo {
+  color: #1F2933;
+  font-weight: 600;
+}
+
+.card-header {
+  background: #FFFFFF;
+}
+
+/* En pantallas angostas, título y pestañas de la tarjeta de comparación en filas, pestañas en línea. */
+.card-header.bslib-navs-card-title {
+  flex-wrap: wrap !important;
+  gap: 0.25rem 1rem;
+}
+
+.card-header.bslib-navs-card-title > .nav {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* tabla ----------------------------------------------------------------- */
+.tabla-encabezado {
+  color: #5F6B7A;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.barra-celda {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.barra-fondo {
+  flex: 1;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #EEF1F4;
+  overflow: hidden;
+}
+
+.barra {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.barra-valor {
+  min-width: 6.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.reactable {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* escalera de competencia ----------------------------------------------- */
+.card-escalera .card-body {
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.escalera {
+  display: grid;
+}
+
+.escalera-cabecera,
+.peldano {
+  display: grid;
+  grid-template-columns: 30px minmax(104px, 1.2fr) minmax(112px, auto) 52px minmax(48px, 1fr) 60px;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+}
+
+.escalera-cabecera {
+  padding-block: 0 4px;
+  color: #5F6B7A;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.escalera-cabecera span:nth-child(3),
+.escalera-cabecera span:nth-child(4),
+.escalera-cabecera span:nth-child(6) {
+  text-align: right;
+}
+
+.peldano {
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.peldano.es-foco {
+  background: rgba(11, 37, 69, 0.06);
+  box-shadow: inset 4px 0 0 #0B2545;
+}
+
+.peldano.lejano {
+  opacity: 0.62;
+  transition: opacity 0.15s;
+}
+
+.peldano.lejano:hover {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .peldano.lejano { transition: none; }
+}
+
+.peldano .pos {
+  color: #5F6B7A;
+  font-weight: 700;
+  text-align: right;
+}
+
+.peldano .nombre {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.peldano.es-foco .nombre,
+.peldano.es-foco .monto {
+  color: #0B2545;
+  font-weight: 700;
+}
+
+.peldano .monto,
+.peldano .var {
+  font-weight: 600;
+  text-align: right;
+}
+
+.peldano .part {
+  color: #5F6B7A;
+  text-align: right;
+}
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 28px;
+}
+
+/* línea interactiva: punto final, cursor y etiqueta (www/escalera.js) */
+.spark-wrap {
+  position: relative;
+  display: block;
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.spark-punto {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #FFFFFF;
+  pointer-events: none;
+}
+
+.spark-cursor {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: rgba(11, 37, 69, 0.28);
+  pointer-events: none;
+}
+
+.spark-tip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #0B2545;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.spark-tip.al-final { transform: translateX(-100%); }
+.spark-tip.al-inicio { transform: none; }
+
+.spark-vacia {
+  color: #8692A0;
+  font-size: 0.75rem;
+}
+
+.brecha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-left: 60px;
+  padding: 3px 0 3px 14px;
+  border-left: 2px dashed #DDE3EA;
+  color: #5F6B7A;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.brecha.clave {
+  border-left-color: #0B2545;
+  color: #1F2933;
+}
+
+.brecha-antes {
+  color: #8692A0;
+}
+
+.estado {
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: #EEF2F7;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.estado.bien { color: #2E7D32; }
+.estado.mal { color: #C62828; }
+.estado.igual { color: #5F6B7A; }
+
+.indicadores {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.vb-movimientos {
+  margin-top: 0.15rem;
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .escalera-cabecera { display: none; }
+  .peldano {
+    grid-template-columns: 30px 1fr auto;
+    grid-template-areas: "pos nombre monto" ". spark var";
+    row-gap: 2px;
+  }
+  .peldano .pos { grid-area: pos; }
+  .peldano .nombre { grid-area: nombre; }
+  .peldano .monto { grid-area: monto; }
+  .peldano .part { display: none; }
+  .peldano .sparkcell { grid-area: spark; }
+  .peldano .var { grid-area: var; }
+  .brecha { margin-left: 18px; }
+}
+
+/* composición por moneda ------------------------------------------------- */
+.comp-barra {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  height: 0.6rem;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.comp-seg {
+  flex-basis: 0;
+  min-width: 2px;
+}
+
+.comp-mixta {
+  color: #8692A0;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.comp-detalle {
+  padding: 0.6rem 1rem 0.8rem 3.5rem;
+  font-size: 0.82rem;
+}
+
+.comp-detalle table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.comp-detalle th,
+.comp-detalle td {
+  padding: 3px 18px 3px 0;
+  text-align: left;
+}
+
+.comp-detalle th {
+  color: #5F6B7A;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.comp-detalle td.num {
+  text-align: right;
+}
+
+.comp-nota {
+  margin: 0.4rem 0 0;
+  color: #8692A0;
+}
+
+.cabecera-tabla {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.leyenda-moneda {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  color: #5F6B7A;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.leyenda-moneda > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.peldano .monto {
+  white-space: nowrap;
+}
+
+.bslib-value-box.vb .value-box-title .vb-titulo {
+  font-size: 0.72rem;
+}
+
+.indicadores {
+  height: 100%;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* bslib escala la letra de los value boxes con su alto: se fija para que no crezca al estirarlos. */
+.bslib-value-box.vb .value-box-title {
+  font-size: 0.72rem !important;
+}
+
+.bslib-value-box.vb .value-box-value {
+  font-size: clamp(1.3rem, 1.8vw, 1.75rem) !important;
+}
+
+.peldano .part {
+  white-space: nowrap;
+}
+
+.enlace-total {
+  display: inline-block;
+  margin: -0.4rem 0 0.9rem;
+  font-size: 0.82rem;
+}
+
+/* ventanas emergentes ---------------------------------------------------- */
+.nota-ventana {
+  margin: 0.75rem 0 0;
+  color: #5F6B7A;
+  font-size: 0.82rem;
+}
+
+.modal-xl .modal-title {
+  color: #0B2545;
+  font-weight: 700;
+}
+
+/* indicadores con gráfico pequeño ---------------------------------------- */
+.indicador {
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #E3E8EE;
+  border-radius: 0.6rem;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.indicador-conjunta {
+  background: linear-gradient(180deg, #F7F9FC 0%, #FFFFFF 100%);
+  box-shadow: inset 4px 0 0 #0B2545, 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.indicador-texto {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.indicador-etiqueta {
+  color: #5F6B7A;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.indicador-valor {
+  color: #0B2545;
+  font-size: clamp(1.35rem, 1.9vw, 1.8rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.indicador-de {
+  color: #5F6B7A;
+  font-size: 0.6em;
+  font-weight: 600;
+}
+
+.indicador-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+}
+
+.var-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.var-chip.sube { background: #E8F3EA; color: #2E7D32; }
+.var-chip.baja { background: #FBEAEA; color: #C62828; }
+.var-chip.igual { background: #EEF2F7; color: #5F6B7A; }
+
+.indicador-nota,
+.indicador-nota-inline {
+  margin: 0;
+  color: #5F6B7A;
+  font-size: 0.8rem;
+}
+
+.indicador-grafico {
+  min-width: 0;
+}
+
+@media (max-width: 420px) {
+  .indicador {
+    grid-template-columns: 1fr;
+  }
+}
+
+.escalera-cabecera,
+.peldano {
+  gap: 10px;
+  padding-inline: 8px;
+}
+
+.peldano .nombre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Escalera compacta para convivir con los indicadores con gráfico (fila 7/5). */
+.peldano {
+  font-size: 0.9rem;
+}
+
+.peldano .var,
+.peldano .monto,
+.peldano .part {
+  white-space: nowrap;
+}
+
+.peldano .nombre {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.tira-puestos {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.indicador-puesto {
+  grid-template-columns: auto minmax(140px, 1.3fr);
+}
+
+.indicador-nota strong {
+  color: #1F2933;
+}
+
+/* Más ancho para los gráficos de los indicadores. */
+.indicador {
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 0.95fr);
+}
+
+.indicador-puesto {
+  grid-template-columns: minmax(0, 0.85fr) minmax(170px, 1.35fr);
+}
+
+.indicador-conjunta .indicador-grafico {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}

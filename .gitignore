@@ -1,0 +1,12 @@
+.Renviron
+**/.Renviron
+apikey_cmf.md
+.DS_Store
+.Rhistory
+.RData
+
+# Publicación y entorno de R
+rsconnect/
+**/rsconnect/
+.Rproj.user/
+**/.Rhistory
