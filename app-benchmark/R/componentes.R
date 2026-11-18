@@ -89,22 +89,32 @@ fila_brecha <- function(b, foco, etiqueta_12m) {
                  htmltools::span(class = paste("estado", clase), estado))
 }
 
-# Escalera: filas del banco analizado y sus vecinos, con brechas entre puestos consecutivos.
-# e: resultado de escalera() con columna filas$nombre.
+# Escalera: todo el ranking en una lista con scroll. Los 5 competidores (e$filas, los mismos que suma el
+# indicador de participación conjunta) van destacados por igual y con brechas entre puestos consecutivos;
+# el resto (e$todos), en filas compactas y pálidas. Clic en cualquier banco que no sea el analizado lo
+# selecciona (www/escalera.js). e: resultado de escalera() con columna nombre en filas y todos.
 escalera_ui <- function(e, foco) {
-  f <- e$filas
+  f <- e$todos
+  competidores <- e$filas$cod_ifi
   pos_foco <- match(foco, f$cod_ifi)
   etiqueta_12m <- etiqueta_periodo(e$periodo_12m)
   partes <- list()
   for (i in seq_len(nrow(f))) {
     es_foco <- f$cod_ifi[i] == foco
+    es_competidor <- f$cod_ifi[i] %in% competidores
     col <- color_banco(f$cod_ifi[i])
     v12 <- f$var_12m[i]
+    clase <- if (!es_competidor) "fuera" else
+      paste(if (es_foco) "es-foco", "competidor")
     partes[[length(partes) + 1]] <- htmltools::div(
-      class = paste("peldano", if (es_foco) "es-foco", if (abs(i - pos_foco) >= 2) "lejano"),
+      class = paste("peldano", clase),
+      # Todos menos el analizado se pueden cliquear para analizarlos.
+      `data-cod` = if (!es_foco) f$cod_ifi[i],
+      tabindex = if (!es_foco) "0", role = if (!es_foco) "button",
+      title = if (!es_foco) paste("Analizar", f$nombre[i]),
       htmltools::span(class = "pos", paste0(f$posicion[i], "°")),
       htmltools::span(class = "nombre", htmltools::span(class = "punto", style = paste0("background:", col)),
-                      f$nombre[i]),
+                      htmltools::span(class = "nombre-texto", f$nombre[i])),
       htmltools::span(class = "monto", monto_corto(f$monto[i])),
       htmltools::span(class = "part", porcentaje(f$participacion[i], 2)),
       htmltools::span(class = "sparkcell", sparkline_svg(f$serie[[i]], col, etiqueta_periodo(e$periodos))),
@@ -113,7 +123,11 @@ escalera_ui <- function(e, foco) {
                         colores[["positivo"]] else colores[["negativo"]]),
                       porcentaje(v12, 1, signo = TRUE))
     )
-    if (i < nrow(f)) partes[[length(partes) + 1]] <- fila_brecha(e$brechas[i, ], foco, etiqueta_12m)
+    # Brecha solo entre dos competidores consecutivos.
+    j <- match(f$cod_ifi[i], competidores)
+    if (!is.na(j) && j < length(competidores)) {
+      partes[[length(partes) + 1]] <- fila_brecha(e$brechas[j, ], foco, etiqueta_12m)
+    }
   }
   htmltools::div(
     class = "escalera",
@@ -121,7 +135,8 @@ escalera_ui <- function(e, foco) {
                    htmltools::span("#"), htmltools::span("Banco"), htmltools::span("Monto"),
                    htmltools::span("Part."), htmltools::span("Últimos 12 meses"),
                    htmltools::span("Var. 12m")),
-    partes
+    # El marco con scroll no aporta alto propio: la tarjeta toma el alto de los indicadores.
+    htmltools::div(class = "escalera-marco", htmltools::div(class = "escalera-lista", partes))
   )
 }
 
@@ -190,46 +205,73 @@ caja_conjunta <- function(sc, ss, e, foco, nombre_banco, nombre_cuenta) {
   )
 }
 
-# Tira de posiciones: un punto por puesto (1° a la izquierda), la escalera sombreada, el puesto de hace
-# 12 meses como anillo y el actual con el color del banco.
-tira_puestos <- function(cp, filas_escalera, foco, nombre_banco) {
+# Tira de posiciones a lo ancho: un punto por puesto (1° a la izquierda), la escalera sombreada con cada
+# banco en su color y su número, el analizado más grande y el puesto de hace 12 meses como anillo.
+tira_puestos <- function(cp, filas_escalera, foco, nombre_banco, todos = NULL) {
   n <- cp$n
-  ancho <- 230
+  ancho <- 320
   x <- function(p) 12 + (p - 1) * (ancho - 24) / max(1, n - 1)
   col <- color_banco(foco)
-  desde <- min(filas_escalera$posicion)
-  hasta <- max(filas_escalera$posicion)
-  banda <- sprintf('<rect x="%.1f" y="12" width="%.1f" height="22" rx="11" fill="#E9EEF4"></rect>',
-                   x(desde) - 9, x(hasta) - x(desde) + 18)
-  puntos <- vapply(seq_len(n), function(p) {
-    sprintf('<circle cx="%.1f" cy="23" r="3.2" fill="#B8C2CE"><title>%d°</title></circle>', x(p), p)
+  esc <- filas_escalera[filas_escalera$posicion <= n, ]
+  desde <- min(esc$posicion)
+  hasta <- max(esc$posicion)
+  banda <- sprintf('<rect x="%.1f" y="11" width="%.1f" height="22" rx="11" fill="#EEF1F4"></rect>',
+                   x(desde) - 10, x(hasta) - x(desde) + 20)
+  resto <- setdiff(seq_len(n), esc$posicion)
+  puntos <- vapply(resto, function(p) {
+    sprintf('<circle cx="%.1f" cy="22" r="2.6" fill="#C3CBD5"><title>%d°</title></circle>', x(p), p)
+  }, "")
+  vecinos <- esc[esc$cod_ifi != foco, ]
+  colores_esc <- vapply(seq_len(nrow(vecinos)), function(i) {
+    sprintf('<circle cx="%.1f" cy="22" r="4.6" fill="%s"><title>%d° %s</title></circle>',
+            x(vecinos$posicion[i]), color_banco(vecinos$cod_ifi[i]), vecinos$posicion[i],
+            nombre_banco(vecinos$cod_ifi[i]))
   }, "")
   antes <- ""
   flecha <- ""
   if (!is.na(cp$puesto_12m) && cp$puesto_12m <= n && cp$puesto_12m != cp$puesto) {
-    antes <- sprintf(paste0('<circle cx="%.1f" cy="23" r="6" fill="#FFFFFF" stroke="%s" ',
-                            'stroke-width="2"><title>hace 12 meses: %d°</title></circle>'),
+    antes <- sprintf(paste0('<circle cx="%.1f" cy="22" r="7.5" fill="none" stroke="%s" ',
+                            'stroke-width="1.8"><title>hace 12 meses: %d°</title></circle>'),
                      x(cp$puesto_12m), col, cp$puesto_12m)
-    flecha <- sprintf(paste0('<path d="M %.1f 13 Q %.1f 2 %.1f 13" fill="none" stroke="%s" ',
+    flecha <- sprintf(paste0('<path d="M %.1f 11 Q %.1f -2 %.1f 11" fill="none" stroke="%s" ',
                              'stroke-width="1.5" marker-end="url(#punta)"></path>'),
                       x(cp$puesto_12m), (x(cp$puesto_12m) + x(cp$puesto)) / 2, x(cp$puesto), col)
   }
-  actual <- sprintf(paste0('<circle cx="%.1f" cy="23" r="7.5" fill="%s" stroke="#FFFFFF" stroke-width="2">',
+  actual <- sprintf(paste0('<circle cx="%.1f" cy="22" r="8.5" fill="%s" stroke="#FFFFFF" stroke-width="2.5">',
                            '<title>%s hoy: %d°</title></circle>'), x(cp$puesto), col, nombre_banco(foco),
                     cp$puesto)
-  texto <- '<text x="%.1f" y="50" font-size="11" fill="#5F6B7A" text-anchor="middle">%s</text>'
-  etiquetas <- paste0(sprintf(texto, x(1), "1°"), sprintf(texto, x(n), paste0(n, "°")))
+  # Números bajo la escalera y en los extremos; el del analizado en negrita.
+  marcas <- sort(unique(c(1, n, esc$posicion)))
+  etiquetas <- vapply(marcas, function(p) {
+    sprintf(paste0('<text x="%.1f" y="49" font-size="10.5" text-anchor="middle" fill="%s"%s>%d</text>'),
+            x(p), if (p == cp$puesto) "#1F2933" else "#5F6B7A",
+            if (p == cp$puesto) ' font-weight="700"' else "", p)
+  }, "")
   defs <- sprintf(paste0('<defs><marker id="punta" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" ',
                          'markerHeight="6" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="%s"></path>',
                          '</marker></defs>'), col)
-  htmltools::HTML(paste0('<svg class="tira-puestos" viewBox="0 0 ', ancho, ' 56" role="img" ',
+  # Áreas invisibles sobre cada banco: al pasar el puntero muestran puesto y nombre, y un clic (salvo en el
+  # analizado) selecciona ese banco (www/escalera.js).
+  otros <- if (is.null(todos)) todos else todos[todos$posicion <= n, ]
+  clic <- vapply(seq_len(NROW(otros)), function(i) {
+    cod <- otros$cod_ifi[i]
+    texto <- paste0(otros$posicion[i], "° ", nombre_banco(cod), if (cod == foco) " · analizado")
+    sprintf(paste0('<circle class="tira-hit%s"%s data-nombre="%s" cx="%.1f" cy="22" r="9" ',
+                   'fill="transparent"></circle>'),
+            if (cod == foco) "" else " tira-clic", if (cod == foco) "" else sprintf(' data-cod="%s"', cod),
+            htmltools::htmlEscape(texto, attribute = TRUE), x(otros$posicion[i]))
+  }, "")
+  htmltools::HTML(paste0('<svg class="tira-puestos" viewBox="0 0 ', ancho, ' 54" role="img" ',
                          'aria-label="Puesto ', cp$puesto, ' de ', n, '">', defs, banda,
-                         paste(puntos, collapse = ""), antes, flecha, actual, etiquetas, '</svg>'))
+                         paste(puntos, collapse = ""), paste(colores_esc, collapse = ""), antes, flecha,
+                         actual, paste(etiquetas, collapse = ""), paste(clic, collapse = ""), '</svg>'))
 }
 
-# Indicador Puesto: puesto del banco, su cambio en 12 meses y la tira de posiciones. Las entradas o
-# salidas de bancos (cp$salieron, cp$entraron) no se muestran aquí; las recibe el chat.
-caja_puesto <- function(cp, e, foco, nombre_banco) {
+# Indicador Puesto como ficha: etiqueta con el color del banco y la cuenta, puesto y cambio en 12 meses, y
+# la tira de posiciones. Las entradas o salidas de bancos (cp$salieron, cp$entraron) no se muestran aquí;
+# las recibe el chat.
+caja_puesto <- function(cp, e, foco, nombre_banco, nombre_cuenta) {
+  col <- color_banco(foco)
   cambio <- if (is.na(cp$puesto_12m)) {
     htmltools::span(class = "var-chip igual", "sin dato hace 12 meses")
   } else {
@@ -239,17 +281,18 @@ caja_puesto <- function(cp, e, foco, nombre_banco) {
       sprintf("%s %d %s", if (d > 0) "▲" else "▼", abs(d), if (abs(d) == 1) "puesto" else "puestos")
     htmltools::span(class = paste("var-chip", clase), texto)
   }
-  indicador(
-    paste("Puesto de", nombre_banco(foco)),
-    htmltools::tagList(sprintf("%d°", cp$puesto),
-                       htmltools::span(class = "indicador-de", sprintf(" de %d", cp$n))),
-    list(
+  htmltools::div(
+    class = "indicador indicador-puesto ficha-puesto",
+    htmltools::span(class = "indicador-etiqueta",
+                    "Puesto de ", htmltools::span(class = "ficha-punto", style = paste0("background:", col)),
+                    nombre_banco(foco), " · ", nombre_cuenta),
+    htmltools::div(
+      class = "ficha-principal",
+      htmltools::div(class = "indicador-valor", sprintf("%d°", cp$puesto),
+                     htmltools::span(class = "indicador-de", sprintf(" de %d", cp$n))),
       htmltools::div(class = "indicador-chips", cambio,
-                     htmltools::span(class = "indicador-nota-inline",
-                                     paste0("vs ", etiqueta_periodo(cp$periodo_12m),
-                                            if (!is.na(cp$puesto_12m)) sprintf(" (%d°)", cp$puesto_12m))))
+                     htmltools::span(class = "indicador-nota-inline", "en 12 meses"))
     ),
-    tira_puestos(cp, e$filas, foco, nombre_banco),
-    clase = "indicador-puesto"
+    htmltools::div(class = "ficha-tira", tira_puestos(cp, e$filas, foco, nombre_banco, e$todos))
   )
 }

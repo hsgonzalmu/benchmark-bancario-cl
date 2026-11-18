@@ -86,3 +86,70 @@
     activa = null;
   });
 })();
+
+// Escalera con todo el ranking: al dibujarse, la lista se desplaza para mostrar a los competidores (con
+// un asomo del banco de arriba); clic o Enter en un banco que no sea el analizado lo selecciona en el
+// filtro Banco. Lo mismo con los puntos de la tira de la ficha de Puesto.
+(function () {
+  function mostrarCompetidores() {
+    document.querySelectorAll(".escalera-lista").forEach(function (lista) {
+      var primero = lista.querySelector(".peldano.competidor");
+      if (!primero) return;
+      var previo = primero.previousElementSibling;
+      lista.scrollTop = Math.max(0, primero.offsetTop - (previo ? previo.offsetHeight * 0.6 : 0));
+    });
+  }
+
+  $(document).on("shiny:value", function (ev) {
+    if (ev.name === "cajas") setTimeout(mostrarCompetidores, 60);
+  });
+
+  function seleccionar(ev) {
+    var fila = ev.target.closest && ev.target.closest(".peldano[data-cod], .tira-clic[data-cod]");
+    if (!fila) return;
+    if (ev.type === "keydown" && ev.key !== "Enter" && ev.key !== " ") return;
+    ev.preventDefault();
+    var sel = document.getElementById("banco");
+    if (sel && sel.selectize) sel.selectize.setValue(fila.dataset.cod);
+  }
+
+  document.addEventListener("click", seleccionar);
+  document.addEventListener("keydown", seleccionar);
+})();
+
+// Tira de la ficha de Puesto: al pasar el puntero por un punto, etiqueta con puesto y nombre del banco.
+(function () {
+  function tip(tira) {
+    var el = tira.querySelector(".tira-tip");
+    if (!el) {
+      el = document.createElement("span");
+      el.className = "tira-tip";
+      el.hidden = true;
+      tira.appendChild(el);
+    }
+    return el;
+  }
+
+  document.addEventListener("pointerover", function (ev) {
+    var punto = ev.target.closest && ev.target.closest(".tira-hit");
+    if (!punto) return;
+    var tira = punto.closest(".ficha-tira");
+    if (!tira) return;
+    var r = punto.getBoundingClientRect(), base = tira.getBoundingClientRect(), el = tip(tira);
+    var x = 100 * (r.left + r.width / 2 - base.left) / base.width;
+    el.textContent = punto.dataset.nombre;
+    el.style.left = x + "%";
+    el.style.top = (r.top - base.top) + "px";
+    el.classList.toggle("al-final", x > 75);
+    el.classList.toggle("al-inicio", x < 25);
+    el.hidden = false;
+  });
+
+  document.addEventListener("pointerout", function (ev) {
+    var punto = ev.target.closest && ev.target.closest(".tira-hit");
+    if (!punto) return;
+    var tira = punto.closest(".ficha-tira");
+    var el = tira && tira.querySelector(".tira-tip");
+    if (el) el.hidden = true;
+  });
+})();

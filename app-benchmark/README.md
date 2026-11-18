@@ -162,6 +162,9 @@ ventana se desplaza: el 1° muestra del 1° al 5°). Entre cada par va la brecha
 base (pb), la de hace 12 meses y su tendencia: se acorta, se amplía, estable (cambio menor a 2 pb) o
 cambio de orden.
 Las brechas que tocan al banco analizado se leen desde su punto de vista ("te faltan", "le llevas").
+La lista incluye todo el ranking con scroll: los demás bancos van en filas compactas y pálidas, sin
+brecha. Clic en cualquier banco que no sea el analizado (también los vecinos) lo deja como
+analizado. Al cargar, la lista se desplaza a los competidores.
 La línea de 12 meses es interactiva (`www/escalera.js`, sin dependencias): al pasar el puntero muestra
 mes y participación ("abr 2026 · 20,89 %") y marca ese mismo mes en las líneas de los demás bancos.
 
@@ -175,14 +178,16 @@ A su lado (fila 7/5), dos indicadores con un gráfico a la derecha:
   crecimiento propio.
 - **Puesto**: el puesto del banco y su cambio en 12 meses. Si salió o entró un banco, no lo muestra en el
   indicador, pero el chat lo sabe y lo explica cuando preguntan por el cambio de puesto. Tira de
-  posiciones del 1° al último: el puesto actual con el color del banco, el de hace 12 meses como anillo
-  con una flecha y los puestos de la escalera sombreados.
+  posiciones a lo ancho, del 1° al último: los bancos de la escalera con su color y su número, el
+  analizado más grande y el puesto de hace 12 meses como anillo con una flecha. Cada punto muestra
+  puesto y nombre al pasar el puntero, y un clic deja ese banco como analizado. Lleva el mismo borde
+  de acento que Participación conjunta.
 
 ## Comparación
 
 | Modo | Integrantes | Brecha | Posición 12m |
 |---|---|---|---|
-| Vecinos | Banco, superior e inferior; resto en gris | Distancia al superior y al inferior | Escalera |
+| Vecinos | Los 5 de la escalera; 2 ocultos en la leyenda | Distancia al superior y al inferior | Escalera |
 | Sistema | Banco y sistema (eje propio, punteado) | Crecimiento del banco menos el del sistema | Todos |
 | Líder | Banco y líder | Monto y puntos de participación del líder sobre el banco | Banco y líder |
 | Bancos | Banco y hasta 4 bancos elegidos | Monto de cada banco elegido menos el del analizado | Elegidos |

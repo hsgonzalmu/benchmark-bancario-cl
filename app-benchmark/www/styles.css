@@ -6,7 +6,7 @@ body {
 
 .bslib-page-sidebar > .navbar,
 .bslib-page-sidebar .navbar {
-  background: #0B2545 !important;
+  background: #1F2933 !important;
   border-bottom: none;
 }
 
@@ -58,7 +58,7 @@ body {
 }
 
 .encabezado-banco {
-  color: #0B2545;
+  color: #1F2933;
   font-size: 1.65rem;
   font-weight: 700;
   line-height: 1.15;
@@ -142,7 +142,7 @@ body {
 
 .bslib-value-box.vb .value-box-value {
   margin-bottom: 0.25rem;
-  color: #0B2545;
+  color: #1F2933;
   font-size: clamp(1.15rem, 1.6vw, 1.45rem);
   font-weight: 700;
   white-space: nowrap;
@@ -170,7 +170,7 @@ body {
 }
 
 shiny-chat-message strong {
-  color: #0B2545;
+  color: #1F2933;
 }
 
 .bslib-value-box.vb-vacia {
@@ -299,20 +299,22 @@ shiny-chat-message strong {
 }
 
 .peldano.es-foco {
-  background: rgba(11, 37, 69, 0.06);
-  box-shadow: inset 4px 0 0 #0B2545;
+  background: rgba(31, 41, 51, 0.06);
+  box-shadow: inset 4px 0 0 #1F2933;
 }
 
-.peldano.lejano {
-  opacity: 0.62;
-  transition: opacity 0.15s;
+.peldano.competidor[data-cod] {
+  cursor: pointer;
 }
 
-.peldano.lejano:hover {
-  opacity: 1;
+.peldano.competidor[data-cod]:hover,
+.peldano.competidor[data-cod]:focus-visible {
+  background: #F4F6F9;
+  outline: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .peldano.lejano { transition: none; }
+
+.peldano.competidor[data-cod]:focus-visible {
+  box-shadow: inset 0 0 0 2px #1F2933;
 }
 
 .peldano .pos {
@@ -329,7 +331,7 @@ shiny-chat-message strong {
 
 .peldano.es-foco .nombre,
 .peldano.es-foco .monto {
-  color: #0B2545;
+  color: #1F2933;
   font-weight: 700;
 }
 
@@ -373,7 +375,7 @@ shiny-chat-message strong {
   top: -2px;
   bottom: -2px;
   width: 1px;
-  background: rgba(11, 37, 69, 0.28);
+  background: rgba(31, 41, 51, 0.28);
   pointer-events: none;
 }
 
@@ -383,7 +385,7 @@ shiny-chat-message strong {
   transform: translateX(-50%);
   padding: 2px 7px;
   border-radius: 5px;
-  background: #0B2545;
+  background: #1F2933;
   color: #FFFFFF;
   font-size: 0.72rem;
   font-weight: 600;
@@ -414,7 +416,7 @@ shiny-chat-message strong {
 }
 
 .brecha.clave {
-  border-left-color: #0B2545;
+  border-left-color: #1F2933;
   color: #1F2933;
 }
 
@@ -576,7 +578,7 @@ shiny-chat-message strong {
 }
 
 .modal-xl .modal-title {
-  color: #0B2545;
+  color: #1F2933;
   font-weight: 700;
 }
 
@@ -595,7 +597,7 @@ shiny-chat-message strong {
 
 .indicador-conjunta {
   background: linear-gradient(180deg, #F7F9FC 0%, #FFFFFF 100%);
-  box-shadow: inset 4px 0 0 #0B2545, 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow: inset 4px 0 0 #1F2933, 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
 .indicador-texto {
@@ -613,7 +615,7 @@ shiny-chat-message strong {
 }
 
 .indicador-valor {
-  color: #0B2545;
+  color: #1F2933;
   font-size: clamp(1.35rem, 1.9vw, 1.8rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -723,3 +725,146 @@ shiny-chat-message strong {
   display: flex;
   align-items: center;
 }
+
+/* ficha del indicador Puesto ------------------------------------------- */
+/* Mismo acento que Participación conjunta; el bloque va centrado en el alto de la tarjeta. */
+.indicador.ficha-puesto {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.9rem;
+  background: linear-gradient(180deg, #F7F9FC 0%, #FFFFFF 100%);
+  box-shadow: inset 4px 0 0 #1F2933, 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.ficha-punto {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin: 0 0.3rem 0.05rem 0.1rem;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.ficha-principal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+}
+
+.ficha-tira .tira-puestos {
+  max-width: 100%;
+}
+
+
+/* escalera con todo el ranking ------------------------------------------ */
+/* La tarjeta toma el alto de los indicadores; la lista se desplaza dentro de un marco sin alto propio. */
+.card-escalera .card-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.escalera {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.escalera-marco {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 22rem;
+}
+
+.escalera-lista {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+/* Bancos fuera de los competidores: compactos y pálidos; al pasar el puntero recuperan el color. */
+.peldano.fuera {
+  padding-block: 3px;
+  opacity: 0.42;
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+
+.peldano.fuera .spark {
+  height: 20px;
+}
+
+.peldano.fuera:hover,
+.peldano.fuera:focus-visible {
+  opacity: 1;
+  background: #F4F6F9;
+  outline: none;
+}
+
+.peldano.fuera:focus-visible {
+  box-shadow: inset 0 0 0 2px #1F2933;
+}
+
+.peldano.competidor:first-child,
+.peldano.fuera + .peldano.competidor {
+  margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peldano.fuera { transition: none; }
+}
+
+/* Nombres largos ("China Construction") se cortan con "…" en vez de montarse sobre el monto. */
+.peldano .nombre {
+  min-width: 0;
+}
+
+.peldano .nombre-texto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* En el celular cada fila ocupa dos líneas: la lista necesita más alto para mostrar a los competidores. */
+@media (max-width: 575.98px) {
+  .escalera-marco { min-height: 34rem; }
+}
+
+/* Puntos de la tira de Puesto: clic para analizar ese banco. */
+.tira-clic {
+  cursor: pointer;
+}
+
+.tira-clic:hover {
+  fill: rgba(31, 41, 51, 0.12);
+}
+
+/* Etiqueta de los puntos de la tira (www/escalera.js), con el estilo de la de las líneas de 12 meses. */
+.ficha-tira {
+  position: relative;
+}
+
+.tira-tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 4px));
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #1F2933;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.tira-tip.al-final { transform: translate(-100%, calc(-100% - 4px)); }
+.tira-tip.al-inicio { transform: translate(0, calc(-100% - 4px)); }

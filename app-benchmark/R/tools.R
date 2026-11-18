@@ -139,7 +139,7 @@ resumen_comparacion <- function(ctx, foco, cuenta, periodo, monedas, comparacion
   s <- series_comparacion(ctx$balance, cuenta, periodo, monedas, foco, comparacion$modo,
                           comparacion$bancos)
   integrantes <- attr(s, "integrantes")
-  integrantes <- integrantes[integrantes$rol != "resto", ]
+  integrantes <- integrantes[!integrantes$rol %in% c("resto", "escalera"), ]
   if (!nrow(s) || !foco %in% integrantes$cod_ifi) {
     return(list(modo = comparacion$modo, mensaje = "Sin datos del banco analizado para comparar."))
   }

@@ -48,7 +48,8 @@ s <- series_comparacion(datos, "144000000", periodo, "total", "009", "vecinos")
 sup <- rk$cod_ifi[rk$rol == "superior"]
 stopifnot(
   all(s$rol[s$cod_ifi == sup] == "superior"),
-  !"resto" %in% s$rol, length(unique(s$cod_ifi)) == 3,
+  !"resto" %in% s$rol, length(unique(s$cod_ifi)) == 5,
+  sum(unique(s[, c("cod_ifi", "rol")])$rol == "escalera") == 2,
   length(unique(s$periodo)) == 24,
   all(abs(s$indice[s$periodo == min(s$periodo)] - 100) < 1e-9)
 )
@@ -189,3 +190,19 @@ stopifnot(
   identical(puntos_base(12.3456), "1.235 pb")
 )
 cat("Pruebas de puntos base pasaron.\n")
+
+
+# Escalera con todo el ranking: todos los bancos, en orden, con su serie de 12 meses
+e <- escalera(datos, "144000000", periodo, monedas_todas, "009")
+rk <- calcular_ranking(datos, "144000000", periodo, monedas_todas)
+stopifnot(identical(e$todos$cod_ifi, rk$cod_ifi), all(lengths(e$todos$serie) == 12),
+          all(e$filas$cod_ifi %in% e$todos$cod_ifi), nrow(e$filas) == 5)
+cat("Escalera con todo el ranking:", nrow(e$todos), "bancos.\n")
+
+# Vecinos con el 2° analizado: el líder es su vecino superior y se dibuja (no queda oculto)
+rk_v <- calcular_ranking(datos, "144000000", periodo, monedas_todas)
+iv <- integrantes_comparacion(calcular_ranking(datos, "144000000", periodo, monedas_todas, rk_v$cod_ifi[2]),
+                              rk_v$cod_ifi[2], "vecinos")
+stopifnot(nrow(iv) == 5, iv$rol[iv$cod_ifi == rk_v$cod_ifi[1]] != "escalera",
+          identical(iv$cod_ifi[iv$rol == "escalera"], rk_v$cod_ifi[4:5]))
+cat("Vecinos del 2°:", paste(iv$rol, collapse = ", "), "\n")

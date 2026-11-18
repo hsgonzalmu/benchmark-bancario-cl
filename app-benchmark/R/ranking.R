@@ -118,11 +118,18 @@ integrantes_comparacion <- function(rk, foco, modo, bancos = character()) {
   elegidos <- switch(
     modo,
     sistema = foco,
-    vecinos = rk$cod_ifi[max(1, match(foco, rk$cod_ifi) - 1):min(nrow(rk), match(foco, rk$cod_ifi) + 1)],
+    vecinos = ventana_escalera(rk, foco)$cod_ifi,
     lider = unique(c(foco, rk$cod_ifi[1])),
     bancos = unique(c(foco, intersect(bancos, rk$cod_ifi)))
   )
   out <- roles[roles$cod_ifi %in% elegidos, ]
+  # En vecinos van los 5 de la escalera; los que están a dos puestos o más del analizado (aunque sea el
+  # líder) llevan el rol "escalera" y se dibujan ocultos. El vecino de arriba conserva su rol, sea
+  # "superior" o "lider".
+  if (modo == "vecinos") {
+    distancia <- abs(match(out$cod_ifi, rk$cod_ifi) - match(foco, rk$cod_ifi))
+    out$rol[distancia >= 2] <- "escalera"
+  }
   if (modo == "lider") out$rol[out$cod_ifi == rk$cod_ifi[1] & out$cod_ifi != foco] <- "lider"
   if (modo == "bancos") out$rol[out$cod_ifi != foco] <- "comparado"
   out <- out[match(elegidos, out$cod_ifi, nomatch = 0), ]
@@ -190,10 +197,15 @@ escalera <- function(datos, cuenta, periodo, monedas, foco) {
   cuenta_datos <- datos[datos$cuenta == cuenta, ]
   sistema <- cuenta_datos[cuenta_datos$cod_ifi == "999", ]
   base <- valor_monedas(sistema, monedas)[match(periodos, sistema$periodo)]
-  v$serie <- lapply(v$cod_ifi, function(cod) {
+  serie_de <- function(cod) {
     d <- cuenta_datos[cuenta_datos$cod_ifi == cod, ]
     valor_monedas(d, monedas)[match(periodos, d$periodo)] / base
-  })
+  }
+  v$serie <- lapply(v$cod_ifi, serie_de)
+  # Ranking completo para la lista con scroll: los competidores son las filas de v.
+  todos <- rk[, c("cod_ifi", "posicion", "monto", "participacion", "var_12m")]
+  todos$serie <- lapply(todos$cod_ifi, serie_de)
+  rownames(todos) <- NULL
 
   arriba <- seq_len(nrow(v) - 1)
   brechas <- data.frame(
@@ -207,7 +219,8 @@ escalera <- function(datos, cuenta, periodo, monedas, foco) {
     tendencia_brecha(brechas$pp[i], brechas$pp_12m[i])
   }, "")
   rownames(v) <- NULL
-  list(filas = v, brechas = brechas, periodo_12m = hace, n_bancos = nrow(rk), periodos = periodos)
+  list(filas = v, brechas = brechas, periodo_12m = hace, n_bancos = nrow(rk), periodos = periodos,
+       todos = todos)
 }
 
 # Puesto del foco y cantidad de bancos, hoy y hace 12 meses, con las instituciones que salieron (y su

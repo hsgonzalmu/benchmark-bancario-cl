@@ -6,8 +6,10 @@ colores <- c(
   positivo = "#2E7D32",
   negativo = "#C62828",
   texto_suave = "#5F6B7A",
-  navy = "#0B2545",
-  primario = "#0B5CAD"
+  # Grafito neutro para la identidad de la app (barra, acentos, controles): ningún banco tiene un color
+  # propio sin tono, así la app no se lee como de un banco.
+  acento = "#1F2933",
+  primario = "#1F2933"
 )
 
 # Composición por moneda: paleta propia y apagada, para que no se confunda con un banco.
@@ -85,6 +87,7 @@ etiquetas_rol <- c(
   lider = "Líder",
   sistema = "Sistema",
   comparado = "Comparado",
+  escalera = "Escalera",
   resto = "Resto"
 )
 

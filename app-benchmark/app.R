@@ -69,6 +69,10 @@ mensaje_tope <- paste0(
   "del dashboard; si recargas la página empieza una sesión nueva."
 )
 
+version_www <- function(archivo) {
+  paste0(archivo, "?v=", format(file.mtime(file.path("www", archivo)), "%Y%m%d%H%M%S"))
+}
+
 # user interface ----------------------------------------------------------
 ui <- page_sidebar(
   title = tags$span(class = "app-titulo", bsicons::bs_icon("bank2"), "Benchmark bancario Chile"),
@@ -110,7 +114,10 @@ ui <- page_sidebar(
       )
     )
   ),
-  tags$head(tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "escalera.js")),
+  # "?v=" con la fecha del archivo: el navegador descarga de nuevo CSS y JS cuando cambian, en vez de usar
+  # una copia antigua en caché.
+  tags$head(tags$link(rel = "stylesheet", href = version_www("styles.css")),
+            tags$script(src = version_www("escalera.js"))),
   uiOutput("encabezado"),
   uiOutput("cajas"),
   layout_columns(
@@ -199,7 +206,10 @@ server <- function(input, output, session) {
   resumen <- reactive(resumen_posicion(ranking(), banco_foco()))
   escalera_actual <- reactive({
     e <- escalera(balance, cuenta(), periodo(), monedas(), banco_foco())
-    if (!is.null(e)) e$filas$nombre <- nombre_banco(e$filas$cod_ifi)
+    if (!is.null(e)) {
+      e$filas$nombre <- nombre_banco(e$filas$cod_ifi)
+      e$todos$nombre <- nombre_banco(e$todos$cod_ifi)
+    }
     e
   })
   composicion_actual <- reactive(composicion(balance, cuenta(), periodo(), monedas()))
@@ -258,7 +268,7 @@ server <- function(input, output, session) {
       div(
         class = "indicadores",
         caja_conjunta(sc, ss, e, banco_foco(), nombre_banco, nombre_cuenta(cuenta())),
-        caja_puesto(cp, e, banco_foco(), nombre_banco)
+        caja_puesto(cp, e, banco_foco(), nombre_banco, nombre_cuenta(cuenta()))
       )
     )
   })

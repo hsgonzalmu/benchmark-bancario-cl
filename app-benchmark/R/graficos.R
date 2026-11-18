@@ -121,6 +121,8 @@ grafico_lineas <- function(s, campo, eje, decimales = 0, sufijo = "", divisor = 
       enableMouseTracking = rol != "resto",
       showInLegend = rol != "resto",
       states = list(inactive = list(opacity = if (rol == "resto") 1 else 0.35)),
+      # Bancos de la escalera que no son vecinos directos: en la leyenda, ocultos hasta que se activen.
+      visible = rol != "escalera",
       yAxis = if (eje_sistema && rol == "sistema") 1 else 0
     )
   }
@@ -370,7 +372,7 @@ tabla_ranking <- function(rk, comp) {
     defaultColDef = reactable::colDef(headerClass = "tabla-encabezado", sortNALast = TRUE),
     rowStyle = function(i) {
       if (d$rol[i] != "foco") return(NULL)
-      list(background = "rgba(11, 37, 69, 0.06)", fontWeight = 650,
+      list(background = "rgba(31, 41, 51, 0.06)", fontWeight = 650,
            boxShadow = paste0("inset 4px 0 0 ", color_banco(d$cod_ifi[i])))
     },
     details = function(i) detalle_composicion(d[i, ], m),
@@ -402,9 +404,9 @@ ultimo_marcado <- function(puntos, color) {
   puntos
 }
 
-# Participación conjunta de la escalera en 24 meses (área azul marino).
+# Participación conjunta de la escalera en 24 meses (área en el color de acento).
 grafico_mini_conjunta <- function(sc) {
-  col <- colores[["navy"]]
+  col <- colores[["acento"]]
   sc <- sc[!is.na(sc$participacion), ]
   puntos <- lapply(seq_len(nrow(sc)), function(i) {
     list(x = highcharter::datetime_to_timestamp(sc$fecha[i]), y = 100 * sc$participacion[i],
