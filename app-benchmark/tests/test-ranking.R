@@ -48,8 +48,7 @@ s <- series_comparacion(datos, "144000000", periodo, "total", "009", "vecinos")
 sup <- rk$cod_ifi[rk$rol == "superior"]
 stopifnot(
   all(s$rol[s$cod_ifi == sup] == "superior"),
-  !"resto" %in% s$rol, length(unique(s$cod_ifi)) == 5,
-  sum(unique(s[, c("cod_ifi", "rol")])$rol == "escalera") == 2,
+  !"resto" %in% s$rol, length(unique(s$cod_ifi)) == 3,
   length(unique(s$periodo)) == 24,
   all(abs(s$indice[s$periodo == min(s$periodo)] - 100) < 1e-9)
 )
@@ -66,12 +65,12 @@ stopifnot(
             "009")
 )
 
-# Ventana de la escalera: intermedio, líder y último
+# Ventana de la escalera (3 bancos; en los extremos se desplaza): intermedio, líder y último
 rk_ultimo <- calcular_ranking(datos, "144000000", periodo, "total")
 stopifnot(
-  identical(ventana_escalera(rk, "009")$posicion, 7:11),
-  identical(ventana_escalera(rk, rk$cod_ifi[1])$posicion, 1:5),
-  identical(ventana_escalera(rk, rk$cod_ifi[nrow(rk)])$posicion, (nrow(rk) - 4):nrow(rk)),
+  identical(ventana_escalera(rk, "009")$posicion, 8:10),
+  identical(ventana_escalera(rk, rk$cod_ifi[1])$posicion, 1:3),
+  identical(ventana_escalera(rk, rk$cod_ifi[nrow(rk)])$posicion, (nrow(rk) - 2):nrow(rk)),
   nrow(ventana_escalera(rk, "049")) == 0
 )
 
@@ -80,7 +79,7 @@ e <- escalera(datos, "144000000", periodo, "total", "009")
 b_sup <- e$brechas[e$brechas$abajo == "009", ]
 b_inf <- e$brechas[e$brechas$arriba == "009", ]
 stopifnot(
-  nrow(e$filas) == 5, nrow(e$brechas) == 4,
+  nrow(e$filas) == 3, nrow(e$brechas) == 2,
   b_sup$arriba == "055", b_sup$tendencia == "estable", round(b_sup$monto / 1e6) == 1086485,
   b_inf$abajo == "051", b_inf$tendencia == "cambio de orden", round(b_inf$monto / 1e6) == 164125,
   all(lengths(e$filas$serie) == 12),
@@ -161,12 +160,14 @@ fin <- ss$monto[nrow(ss)]
 stopifnot(nrow(ss) == 24, round(fin / 1e6) == 278598681,
           round(100 * variacion(fin, ss$monto[ss$periodo == desplazar_periodo(periodo, -12)]), 1) == 5.1)
 
-# Participación conjunta de la escalera: el último mes es la suma de la escalera; salto en oct 2025
-esc <- escalera(datos, "144000000", periodo, "total", "009")
-scj <- serie_conjunta(datos, "144000000", periodo, "total", esc$filas$cod_ifi, meses = 24)
-saltos <- diff(100 * scj$participacion)
-stopifnot(abs(scj$participacion[24] - sum(esc$filas$participacion)) < 1e-12,
-          scj$periodo[which.max(saltos) + 1] == "202511", round(max(saltos), 2) == 2.69)
+# Participación de un banco en el tiempo (indicador): el último mes es su participación de hoy; BICE salta
+# más de 100 pb en nov 2025 por la fusión con Security
+esc <- escalera(datos, "144000000", periodo, "total", "028")
+sb <- serie_conjunta(datos, "144000000", periodo, "total", "028", meses = 24)
+saltos <- diff(100 * sb$participacion)
+stopifnot(abs(sb$participacion[24] - esc$filas$participacion[esc$filas$cod_ifi == "028"]) < 1e-12,
+          sb$periodo[which.max(saltos) + 1] == "202511", max(saltos) > 1)
+cat("Salto de BICE en nov 2025:", round(100 * max(saltos)), "pb\n")
 
 cat("Todas las pruebas de ranking pasaron.\n")
 
@@ -196,13 +197,27 @@ cat("Pruebas de puntos base pasaron.\n")
 e <- escalera(datos, "144000000", periodo, monedas_todas, "009")
 rk <- calcular_ranking(datos, "144000000", periodo, monedas_todas)
 stopifnot(identical(e$todos$cod_ifi, rk$cod_ifi), all(lengths(e$todos$serie) == 12),
-          all(e$filas$cod_ifi %in% e$todos$cod_ifi), nrow(e$filas) == 5)
+          all(e$filas$cod_ifi %in% e$todos$cod_ifi), nrow(e$filas) == 3)
 cat("Escalera con todo el ranking:", nrow(e$todos), "bancos.\n")
 
-# Vecinos con el 2° analizado: el líder es su vecino superior y se dibuja (no queda oculto)
+# Vecinos con el 2° analizado: el líder (su vecino superior), el banco y el 3°
 rk_v <- calcular_ranking(datos, "144000000", periodo, monedas_todas)
 iv <- integrantes_comparacion(calcular_ranking(datos, "144000000", periodo, monedas_todas, rk_v$cod_ifi[2]),
                               rk_v$cod_ifi[2], "vecinos")
-stopifnot(nrow(iv) == 5, iv$rol[iv$cod_ifi == rk_v$cod_ifi[1]] != "escalera",
-          identical(iv$cod_ifi[iv$rol == "escalera"], rk_v$cod_ifi[4:5]))
+stopifnot(identical(iv$cod_ifi, rk_v$cod_ifi[1:3]), identical(iv$rol, c("lider", "foco", "inferior")))
 cat("Vecinos del 2°:", paste(iv$rol, collapse = ", "), "\n")
+
+# Base 100 desde hace 12 meses: 100 en ese mes y solo los meses desde ahí
+s <- series_comparacion(datos, "144000000", periodo, monedas_todas, "009", "vecinos")
+desde <- desplazar_periodo(periodo, -12)
+r <- rebasar_indice(s, desde)
+stopifnot(min(r$periodo) == desde, all(abs(r$indice[r$periodo == desde] - 100) < 1e-9),
+          length(unique(r$periodo)) == 13, !is.null(attr(r, "integrantes")))
+cat("Base 100 desde", etiqueta_periodo(desde), "ok\n")
+
+# Vecinos del líder: el 2° y el 3° (este como comparado, con su color)
+il <- integrantes_comparacion(calcular_ranking(datos, "144000000", periodo, monedas_todas, rk_v$cod_ifi[1]),
+                              rk_v$cod_ifi[1], "vecinos")
+stopifnot(identical(il$cod_ifi, rk_v$cod_ifi[1:3]), identical(il$rol, c("foco", "inferior", "comparado")))
+cat("Vecinos del líder:", paste(il$rol, collapse = ", "), "
+")

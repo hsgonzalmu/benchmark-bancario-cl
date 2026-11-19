@@ -157,37 +157,53 @@ extranjera, BCI pasa del 1° al 4° puesto en Colocaciones a sep 2026.
 
 ## Escalera de competencia
 
-Bajo el encabezado, el banco analizado y hasta dos puestos hacia cada lado (5 bancos; en los extremos la
-ventana se desplaza: el 1° muestra del 1° al 5°). Entre cada par va la brecha de hoy en MM$ y puntos
-base (pb), la de hace 12 meses y su tendencia: se acorta, se amplía, estable (cambio menor a 2 pb) o
-cambio de orden.
+Bajo el encabezado, el banco analizado y sus vecinos directos, el de arriba y el de abajo: 3 bancos (el
+líder con los dos que le siguen y el último con los dos de arriba). Entre cada par va la brecha de hoy
+en MM$ y puntos base (pb), la de hace 12 meses y su tendencia: se acorta, se amplía, estable (cambio
+menor a 2 pb) o cambio de orden.
 Las brechas que tocan al banco analizado se leen desde su punto de vista ("te faltan", "le llevas").
 La lista incluye todo el ranking con scroll: los demás bancos van en filas compactas y pálidas, sin
 brecha. Clic en cualquier banco que no sea el analizado (también los vecinos) lo deja como
 analizado. Al cargar, la lista se desplaza a los competidores.
+Al cambiar solo el banco, la escalera no se redibuja: el servidor envía el mensaje `escalera_foco` y
+`www/escalera.js` cambia competidores, analizado y brechas, y desliza la lista hasta los nuevos
+competidores. Se dibuja de nuevo al cambiar cuenta, período o monedas.
+Los indicadores también se actualizan sin redibujarse (mensaje `indicadores_foco`): las cifras cuentan
+hasta el nuevo valor, los textos cambian con un fundido y la tira de Puesto desliza sus marcas.
+Las transiciones usan una curva suave: 0,9 s para los colores del ranking y 0,7 s para el deslizamiento
+de la escalera (sin movimiento si el sistema pide reducirlo). Los gráficos de tiempo muestran el tooltip
+en tabla, ordenado de mayor a menor salvo en puestos.
 La línea de 12 meses es interactiva (`www/escalera.js`, sin dependencias): al pasar el puntero muestra
 mes y participación ("abr 2026 · 20,89 %") y marca ese mismo mes en las líneas de los demás bancos.
 
 A su lado (fila 7/5), dos indicadores con un gráfico a la derecha:
 
-- **Participación conjunta**: el peso de los bancos de la escalera sobre el sistema como cifra
-  principal, su cambio en puntos base (pb; 1 pp = 100 pb) en el mes y en 12 meses, el total del
-  sistema en negrita con su variación mensual, y la participación del banco analizado. Gráfico de
-  área de 24 meses con tooltip. Si la serie salta más de 100 pb en un mes (por ejemplo, +269 pb en nov
-  2025 por la fusión BICE-Security), lo avisa para que el cambio en 12 meses no se lea como
-  crecimiento propio.
+- **Participación de <banco>**: su participación como cifra principal, su cambio en puntos base (pb;
+  1 pp = 100 pb) en el mes y en 12 meses, lo que le falta para alcanzar al de arriba y su ventaja sobre
+  el de abajo (en pb), el total del sistema con su variación mensual y, como dato de apoyo, la
+  participación conjunta de los 3 de la escalera. Gráfico de área de 24 meses en el
+  color del banco. Si la serie salta más de 100 pb en un mes (como BICE en nov 2025 por la fusión con
+  Security), lo avisa para que el cambio en 12 meses no se lea como crecimiento propio.
 - **Puesto**: el puesto del banco y su cambio en 12 meses. Si salió o entró un banco, no lo muestra en el
   indicador, pero el chat lo sabe y lo explica cuando preguntan por el cambio de puesto. Tira de
   posiciones a lo ancho, del 1° al último: los bancos de la escalera con su color y su número, el
   analizado más grande y el puesto de hace 12 meses como anillo con una flecha. Cada punto muestra
   puesto y nombre al pasar el puntero, y un clic deja ese banco como analizado. Lleva el mismo borde
-  de acento que Participación conjunta.
+  de acento que el indicador de participación.
 
 ## Comparación
 
+En Evolución, Base 100 y Participación cada línea se rotula donde termina (las etiquetas que chocan se
+separan solas), sin leyenda. Para sumar otros bancos se usa el modo Bancos. En modo Sistema, con eje a
+la derecha, se mantiene la leyenda.
+
+Brecha muestra al otro banco menos el analizado: el cero es el analizado, arriba lo que le falta para
+alcanzar al de arriba y abajo su ventaja sobre el de abajo (áreas en el color del otro banco). Base 100
+parte en 100 desde hace 3, 12 (por defecto) o 24 meses, según los botones sobre el gráfico.
+
 | Modo | Integrantes | Brecha | Posición 12m |
 |---|---|---|---|
-| Vecinos | Los 5 de la escalera; 2 ocultos en la leyenda | Distancia al superior y al inferior | Escalera |
+| Vecinos | Banco, superior e inferior | Lo que falta (arriba) y la ventaja (abajo) | Escalera |
 | Sistema | Banco y sistema (eje propio, punteado) | Crecimiento del banco menos el del sistema | Todos |
 | Líder | Banco y líder | Monto y puntos de participación del líder sobre el banco | Banco y líder |
 | Bancos | Banco y hasta 4 bancos elegidos | Monto de cada banco elegido menos el del analizado | Elegidos |
@@ -202,6 +218,12 @@ Incluye la composición por moneda de las monedas elegidas: barra apilada y, al 
 montos y su porcentaje sobre la selección. Si los
 componentes tienen signos distintos (casi siempre en Patrimonio), la celda dice "signos mixtos" y no hay
 porcentajes.
+
+Clic en una fila de la tabla o en una barra del gráfico de ranking deja ese banco como analizado, igual
+que en la escalera y en la tira de Puesto; la flecha (▸) solo abre el detalle.
+
+Al cambiar solo el banco, el gráfico de ranking no se redibuja: `highchartProxy()` actualiza colores,
+negrita y pista en el navegador. Se dibuja de nuevo al cambiar cuenta, período o monedas.
 
 ## Sistema visual
 

@@ -131,7 +131,14 @@ ui <- page_sidebar(
       full_screen = TRUE,
       title = tags$span(class = "card-titulo", textOutput("titulo_comparacion", inline = TRUE)),
       nav_panel("Evolución", highchartOutput("g_evolucion", height = "440px")),
-      nav_panel("Base 100", highchartOutput("g_base100", height = "440px")),
+      nav_panel(
+        "Base 100",
+        # Punto de partida del índice: 100 en el mes elegido.
+        div(class = "selector-base",
+            radioButtons("base_desde", "Desde hace", inline = TRUE, selected = "12",
+                         choices = c("3 meses" = "3", "12 meses" = "12", "24 meses" = "23"))),
+        highchartOutput("g_base100", height = "400px")
+      ),
       nav_panel("Participación", highchartOutput("g_participacion", height = "440px")),
       nav_panel("Brecha", highchartOutput("g_brecha", height = "440px")),
       nav_panel("Posición 12m", highchartOutput("g_pesas", height = "440px"))
@@ -251,27 +258,82 @@ server <- function(input, output, session) {
     )
   })
 
+  # Marco de escalera e indicadores: solo cambia si el banco tiene o no dato en el período. hay_dato es un
+  # reactiveVal porque no avisa si recibe el mismo valor, así el marco no se reconstruye al cambiar de banco.
+  hay_dato <- reactiveVal(TRUE)
+  observe(hay_dato(resumen()$con_dato))
   output$cajas <- renderUI({
-    r <- resumen()
-    if (!r$con_dato) return(NULL)
-    e <- escalera_actual()
-    cp <- cambio_puesto(balance, cuenta(), periodo(), monedas(), banco_foco())
-    ss <- serie_sistema(balance, cuenta(), periodo(), monedas(), meses = 24)
-    sc <- serie_conjunta(balance, cuenta(), periodo(), monedas(), e$filas$cod_ifi, meses = 24)
+    if (!hay_dato()) return(NULL)
     layout_columns(
       col_widths = breakpoints(sm = 12, lg = c(7, 5)), fill = FALSE, class = "fila-cajas",
       card(
         class = "card-escalera",
         card_header(class = "card-titulo", "Escalera de competencia"),
-        card_body(escalera_ui(e, banco_foco()))
+        card_body(uiOutput("escalera", class = "escalera-salida"))
       ),
-      div(
-        class = "indicadores",
-        caja_conjunta(sc, ss, e, banco_foco(), nombre_banco, nombre_cuenta(cuenta())),
-        caja_puesto(cp, e, banco_foco(), nombre_banco, nombre_cuenta(cuenta()))
-      )
+      uiOutput("indicadores", class = "indicadores")
     )
   })
+
+  # Escalera: se dibuja de nuevo con cuenta, período y monedas. Al cambiar de banco, el observador de abajo
+  # la actualiza en el navegador (www/escalera.js), sin redibujar sus filas.
+  output$escalera <- renderUI({
+    cuenta(); periodo(); monedas()
+    if (!hay_dato()) return(NULL)
+    isolate({
+      e <- escalera_actual()
+      if (is.null(e)) NULL else escalera_ui(e, banco_foco())
+    })
+  })
+  observeEvent(banco_foco(), {
+    e <- escalera_actual()
+    if (is.null(e) || !hay_dato()) return()
+    session$sendCustomMessage("escalera_foco", escalera_mensaje(e, banco_foco()))
+  }, ignoreInit = TRUE)
+
+  # Indicadores: se dibujan de nuevo con cuenta, período y monedas. Al cambiar de banco, el observador de
+  # abajo los actualiza en el navegador: cifras que cuentan hasta el nuevo valor, textos con fundido, tira
+  # que se desliza (www/escalera.js) y mini gráfico por proxy.
+  datos_indicadores <- function() {
+    list(
+      e = escalera_actual(),
+      cp = cambio_puesto(balance, cuenta(), periodo(), monedas(), banco_foco()),
+      ss = serie_sistema(balance, cuenta(), periodo(), monedas(), meses = 24),
+      sb = serie_conjunta(balance, cuenta(), periodo(), monedas(), banco_foco(), meses = 24)
+    )
+  }
+  output$indicadores <- renderUI({
+    cuenta(); periodo(); monedas()
+    if (!hay_dato()) return(NULL)
+    isolate({
+      if (!resumen()$con_dato) return(NULL)
+      d <- datos_indicadores()
+      tagList(
+        caja_participacion(d$sb, d$ss, d$e, banco_foco(), nombre_banco, nombre_cuenta(cuenta()),
+                           grafico = highchartOutput("mini_participacion", height = "110px")),
+        caja_puesto(d$cp, d$e, banco_foco(), nombre_banco, nombre_cuenta(cuenta()))
+      )
+    })
+  })
+  output$mini_participacion <- renderHighchart({
+    cuenta(); periodo(); monedas(); hay_dato()
+    isolate({
+      req(resumen()$con_dato)
+      grafico_mini_participacion(datos_indicadores()$sb, color_banco(banco_foco()))
+    })
+  })
+  observeEvent(banco_foco(), {
+    if (!hay_dato() || !resumen()$con_dato) return()
+    d <- datos_indicadores()
+    session$sendCustomMessage("indicadores_foco", indicadores_mensaje(
+      d$sb, d$ss, d$e, d$cp, banco_foco(), nombre_banco, nombre_cuenta(cuenta())
+    ))
+    col <- color_banco(banco_foco())
+    m <- mini_participacion_datos(d$sb, col)
+    highchartProxy("mini_participacion") |>
+      hcpxy_update(series = list(list(id = "participacion", data = m$data, color = col)),
+                   yAxis = list(min = m$min, max = m$max))
+  }, ignoreInit = TRUE)
 
   # gráficos --------------------------------------------------------------
   output$titulo_ranking <- renderText({
@@ -295,10 +357,20 @@ server <- function(input, output, session) {
     )))
   })
 
-  output$g_ranking <- renderHighchart({
+  # El ranking se dibuja de nuevo solo si cambian cuenta, período o monedas. Al cambiar de banco, el
+  # observador de abajo actualiza colores, negrita y pista por proxy, sin redibujar el gráfico.
+  destacados_ranking <- function() {
     e <- escalera_actual()
-    grafico_ranking(ranking(), if (is.null(e)) character() else e$filas$cod_ifi)
+    if (is.null(e)) character() else e$filas$cod_ifi
+  }
+  output$g_ranking <- renderHighchart({
+    cuenta(); periodo(); monedas()
+    isolate(grafico_ranking(ranking(), destacados_ranking()))
   })
+  observeEvent(banco_foco(), {
+    highchartProxy("g_ranking") |>
+      hcpxy_update_series(id = "ranking", data = puntos_ranking(ranking(), destacados_ranking()))
+  }, ignoreInit = TRUE)
 
   # Posición 12m: el conjunto sigue el modo de comparación.
   output$g_pesas <- renderHighchart({
@@ -324,7 +396,10 @@ server <- function(input, output, session) {
   })
   output$g_base100 <- renderHighchart({
     requiere_dato()
-    grafico_lineas(series(), "indice", "Índice (primer mes = 100)", decimales = 1)
+    meses <- as.integer(if (is.null(input$base_desde)) "12" else input$base_desde)
+    desde <- desplazar_periodo(periodo(), -meses)
+    grafico_lineas(rebasar_indice(series(), desde),
+                   "indice", paste0("Índice (", etiqueta_periodo(desde), " = 100)"), decimales = 1)
   })
   output$g_participacion <- renderHighchart({
     requiere_dato()

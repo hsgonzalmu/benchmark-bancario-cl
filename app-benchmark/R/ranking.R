@@ -123,18 +123,27 @@ integrantes_comparacion <- function(rk, foco, modo, bancos = character()) {
     bancos = unique(c(foco, intersect(bancos, rk$cod_ifi)))
   )
   out <- roles[roles$cod_ifi %in% elegidos, ]
-  # En vecinos van los 5 de la escalera; los que están a dos puestos o más del analizado (aunque sea el
-  # líder) llevan el rol "escalera" y se dibujan ocultos. El vecino de arriba conserva su rol, sea
-  # "superior" o "lider".
-  if (modo == "vecinos") {
-    distancia <- abs(match(out$cod_ifi, rk$cod_ifi) - match(foco, rk$cod_ifi))
-    out$rol[distancia >= 2] <- "escalera"
-  }
+  # En los extremos la escalera suma un banco que no es vecino directo (el 3° para el líder): se dibuja
+  # como comparado, con su color.
+  if (modo == "vecinos") out$rol[out$rol == "resto"] <- "comparado"
   if (modo == "lider") out$rol[out$cod_ifi == rk$cod_ifi[1] & out$cod_ifi != foco] <- "lider"
   if (modo == "bancos") out$rol[out$cod_ifi != foco] <- "comparado"
   out <- out[match(elegidos, out$cod_ifi, nomatch = 0), ]
   if (modo == "sistema") out <- rbind(out, data.frame(cod_ifi = "999", rol = "sistema"))
   out[!duplicated(out$cod_ifi), ]
+}
+
+# Rehace el índice base 100 desde el mes "desde" (para cada banco, su primer mes con dato desde ahí) y deja
+# solo los meses desde ese punto. s: resultado de series_comparacion().
+rebasar_indice <- function(s, desde) {
+  out <- s[s$periodo >= desde, ]
+  out <- out[order(out$cod_ifi, out$periodo), ]
+  out$indice <- unlist(lapply(split(out$monto, out$cod_ifi), function(m) {
+    base <- m[!is.na(m) & m != 0][1]
+    if (is.na(base)) rep(NA_real_, length(m)) else 100 * m / base
+  }))
+  attr(out, "integrantes") <- attr(s, "integrantes")
+  out
 }
 
 # Serie histórica de los integrantes hasta el período elegido, con participación e índice base 100.
@@ -165,9 +174,10 @@ series_comparacion <- function(datos, cuenta, periodo, monedas, foco, modo,
 
 # escalera de competencia -------------------------------------------------
 
-# Filas de la escalera: el foco y hasta dos puestos a cada lado; en los extremos se desplaza para
-# mantener 5 bancos (o todos, si el ranking tiene menos).
-ventana_escalera <- function(rk, foco, tamano = 5) {
+# Filas de la escalera: el foco y sus vecinos directos (3 bancos). En los extremos se desplaza para
+# mantener 3: el líder con los dos que le siguen y el último con los dos de arriba. La usan la escalera y
+# la comparación con vecinos.
+ventana_escalera <- function(rk, foco, tamano = 3) {
   pos <- match(foco, rk$cod_ifi)
   if (is.na(pos)) return(rk[0, ])
   k <- min(tamano, nrow(rk))
@@ -370,7 +380,7 @@ serie_sistema <- function(datos, cuenta, periodo, monedas, meses = 24) {
   data.frame(periodo = d$periodo, fecha = d$fecha, monto = valor_monedas(d, monedas))
 }
 
-# Participación conjunta mes a mes de un conjunto fijo de bancos (por ejemplo, la escalera actual).
+# Participación conjunta mes a mes de un conjunto fijo de bancos (con un solo banco, su participación).
 serie_conjunta <- function(datos, cuenta, periodo, monedas, cods, meses = 24) {
   per <- periodos_ventana(datos, periodo, meses)
   d <- datos[datos$cuenta == cuenta & datos$periodo %in% per & datos$cod_ifi %in% c(cods, "999"), ]

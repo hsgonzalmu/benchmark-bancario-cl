@@ -97,21 +97,21 @@ devolver posición o vecinos.
   disponible
 
 ### Requirement: Ventana de la escalera
-La escalera SHALL incluir al banco analizado y hasta dos puestos hacia cada lado, en orden de ranking,
-con 5 bancos cuando el ranking tiene 5 o más. En los extremos, la ventana SHALL desplazarse para
-mantener 5 bancos.
+La escalera SHALL incluir al banco analizado y sus vecinos directos (el de arriba y el de abajo), en orden
+de ranking: 3 bancos. En los extremos SHALL desplazarse para mantener 3: el líder con los dos que le
+siguen y el último con los dos de arriba.
 
 #### Scenario: Banco en posición intermedia
 - **WHEN** el banco analizado está 9° de 17
-- **THEN** la escalera muestra los puestos 7 a 11
+- **THEN** la escalera muestra los puestos 8 a 10
 
 #### Scenario: Banco líder
 - **WHEN** el banco analizado está 1° de 17
-- **THEN** la escalera muestra los puestos 1 a 5, con el banco analizado arriba
+- **THEN** la escalera muestra los puestos 1 a 3, con el banco analizado arriba
 
 #### Scenario: Último del ranking
 - **WHEN** el banco analizado está 17° de 17
-- **THEN** la escalera muestra los puestos 13 a 17
+- **THEN** la escalera muestra los puestos 15 a 17
 
 ### Requirement: Brechas entre puestos consecutivos
 Para cada par de puestos consecutivos de la escalera SHALL calcularse la brecha de hoy (monto y puntos de

@@ -78,8 +78,8 @@ estado. Las ventanas de `mostrar_grafico` y `mostrar_tabla` no cambian el dashbo
   van en "%".
 - Variaciones mensuales y en 12 meses: nominales, sin ajustar por inflación.
 - Brecha "otro menos analizado": positiva si el otro banco es mayor.
-- Escalera: el banco y hasta dos puestos a cada lado. Para "¿se acerca o se aleja?" usa la brecha de hoy,
-  la de hace 12 meses y la tendencia que vienen en `escalera`; no las recalcules.
+- Escalera: el banco y sus vecinos directos (el de arriba y el de abajo). Para "¿se acerca o se aleja?" usa la
+  brecha de hoy, la de hace 12 meses y la tendencia que vienen en `escalera`; no las recalcules.
 - Puesto: si en `puesto_hace_12_meses` salió un banco que estaba arriba (como Security, que se fusionó
   con BICE), dilo: parte del ascenso no viene del crecimiento propio.
 - Composición: CLP no reajustable, reajustable IPC (UF), reajustable TC y moneda extranjera, sobre el

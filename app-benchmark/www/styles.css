@@ -595,7 +595,7 @@ shiny-chat-message strong {
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
-.indicador-conjunta {
+.indicador-participacion {
   background: linear-gradient(180deg, #F7F9FC 0%, #FFFFFF 100%);
   box-shadow: inset 4px 0 0 #1F2933, 0 1px 2px rgba(16, 24, 40, 0.04);
 }
@@ -720,14 +720,14 @@ shiny-chat-message strong {
   grid-template-columns: minmax(0, 0.85fr) minmax(170px, 1.35fr);
 }
 
-.indicador-conjunta .indicador-grafico {
+.indicador-participacion .indicador-grafico {
   align-self: stretch;
   display: flex;
   align-items: center;
 }
 
 /* ficha del indicador Puesto ------------------------------------------- */
-/* Mismo acento que Participación conjunta; el bloque va centrado en el alto de la tarjeta. */
+/* Mismo acento que el indicador de participación; el bloque va centrado en el alto de la tarjeta. */
 .indicador.ficha-puesto {
   display: flex;
   flex-direction: column;
@@ -794,7 +794,6 @@ shiny-chat-message strong {
   padding-block: 3px;
   opacity: 0.42;
   cursor: pointer;
-  transition: opacity 0.15s, background-color 0.15s;
 }
 
 .peldano.fuera .spark {
@@ -868,3 +867,148 @@ shiny-chat-message strong {
 
 .tira-tip.al-final { transform: translate(-100%, calc(-100% - 4px)); }
 .tira-tip.al-inicio { transform: translate(0, calc(-100% - 4px)); }
+
+/* Contenedor de output$escalera: pasa el alto de la tarjeta a la escalera y su lista con scroll. */
+.escalera-salida {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Transiciones al cambiar de banco por proxy: las filas se aclaran u oscurecen y cambian de alto con
+   suavidad, y las brechas nuevas aparecen con un fundido. */
+.peldano {
+  transition: opacity 0.45s ease, background-color 0.45s ease, box-shadow 0.45s ease,
+    padding 0.45s ease;
+}
+
+.peldano .spark {
+  transition: height 0.45s ease;
+}
+
+.escalera-lista .brecha {
+  animation: brecha-aparece 0.5s ease both;
+}
+
+@keyframes brecha-aparece {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peldano,
+  .peldano .spark { transition: none; }
+  .escalera-lista .brecha { animation: none; }
+}
+
+/* Indicadores actualizados por proxy (www/escalera.js): fundido de textos y transiciones de la tira. */
+.indicador-lineas {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.indicador-lineas,
+.ficha-puesto .indicador-etiqueta,
+.ficha-puesto .indicador-chips {
+  transition: opacity 0.2s ease;
+}
+
+.cambiando {
+  opacity: 0;
+}
+
+.tira-dot {
+  transition: fill 0.5s ease, r 0.5s ease;
+}
+
+.tira-actual,
+.tira-punta {
+  transition: fill 0.5s ease;
+}
+
+.tira-antes,
+.tira-flecha {
+  transition: opacity 0.3s ease, stroke 0.5s ease;
+}
+
+.tira-num {
+  fill: #5F6B7A;
+  transition: opacity 0.4s ease;
+}
+
+.tira-num.es-foco {
+  fill: #1F2933;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicador-lineas,
+  .ficha-puesto .indicador-etiqueta,
+  .ficha-puesto .indicador-chips,
+  .tira-dot,
+  .tira-actual,
+  .tira-punta,
+  .tira-antes,
+  .tira-flecha,
+  .tira-num { transition: none; }
+}
+
+/* Selector del punto de partida de Base 100: botones segmentados sobre el gráfico. */
+.selector-base {
+  padding: 0.5rem 0.75rem 0;
+}
+
+.selector-base .form-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.selector-base .control-label {
+  margin: 0;
+  color: #5F6B7A;
+  font-size: 0.8rem;
+}
+
+.selector-base .shiny-options-group {
+  display: inline-flex;
+  border: 1px solid #D5DBE2;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.selector-base .radio-inline {
+  margin: 0;
+  padding: 0;
+}
+
+.selector-base .radio-inline input {
+  position: absolute;
+  opacity: 0;
+}
+
+.selector-base .radio-inline span {
+  display: block;
+  padding: 0.2rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.selector-base .radio-inline input:checked + span {
+  background: #1F2933;
+  color: #FFFFFF;
+}
+
+.selector-base .radio-inline input:focus-visible + span {
+  outline: 2px solid #1F2933;
+  outline-offset: -2px;
+}
+
+/* Chat: shinychat centra el saludo en el alto del panel (margen superior automático) y deja un hueco bajo
+   el título "Chat". Se ancla arriba. */
+#chat .shiny-chat-greeting {
+  margin-top: 0.25rem !important;
+}

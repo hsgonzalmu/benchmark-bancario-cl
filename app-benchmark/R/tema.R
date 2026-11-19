@@ -87,7 +87,6 @@ etiquetas_rol <- c(
   lider = "Líder",
   sistema = "Sistema",
   comparado = "Comparado",
-  escalera = "Escalera",
   resto = "Resto"
 )
 
@@ -96,6 +95,15 @@ fuente_app <- "Inter, sans-serif"
 
 # Animación de entrada de todos los gráficos: más lenta que la de Highcharts (1 s), para un llenado suave.
 animacion_graficos <- list(duration = 1600)
+
+# Transición de los cambios hechos por proxy (por ejemplo, colores del ranking al cambiar de banco): 0,9 s
+# con aceleración y frenado suaves (curva cúbica).
+animacion_cambios <- list(
+  duration = 900,
+  easing = htmlwidgets::JS(
+    "function (p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }"
+  )
+)
 
 tema_app <- bslib::bs_theme(
   version = 5,

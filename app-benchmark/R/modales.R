@@ -106,7 +106,7 @@ grafico_evolucion_bancos <- function(serie, foco, nombre_banco) {
   trazo <- trazos_bancos(orden)
   pequenos <- max(abs(serie$monto), na.rm = TRUE) < 1e9
   divisor <- if (pequenos) 1e6 else 1e9
-  hc <- base_tiempo() |>
+  hc <- base_tiempo(orden = TRUE) |>
     highcharter::hc_yAxis(title = list(text = if (pequenos) "Millones de $" else "Miles de millones de $"),
                           labels = list(format = "{value:,.0f}")) |>
     highcharter::hc_tooltip(valueDecimals = 0, valueSuffix = if (pequenos) " millones" else " mil millones")
@@ -253,7 +253,7 @@ grafico_cuentas <- function(sc, medida, nombre_cuenta) {
     participacion = list(divisor = 0.01, eje = "Participación sobre el sistema", formato = "{value:,.1f} %",
                          dec = 2, sufijo = " %")
   )
-  hc <- base_tiempo() |>
+  hc <- base_tiempo(orden = TRUE) |>
     highcharter::hc_yAxis(title = list(text = ajuste$eje), labels = list(format = ajuste$formato)) |>
     highcharter::hc_tooltip(valueDecimals = ajuste$dec, valueSuffix = ajuste$sufijo)
   for (i in seq_along(cuentas)) {

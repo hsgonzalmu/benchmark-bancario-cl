@@ -7,13 +7,24 @@ puntos_tiempo <- function(fecha, y) {
   highcharter::list_parse2(data.frame(x = highcharter::datetime_to_timestamp(fecha), y = y))
 }
 
-base_tiempo <- function() {
+# Base de los gráficos de tiempo. Tooltip como tabla (hc_tooltip(table = TRUE) de highcharter), con el punto
+# en el color del banco y el nombre en color de texto. orden = TRUE agrega hc_tooltip(sort = TRUE): bancos
+# de mayor a menor valor en cada mes.
+base_tiempo <- function(orden = FALSE) {
   highcharter::highchart() |>
     highcharter::hc_xAxis(type = "datetime", crosshair = list(color = "#E3E8EE")) |>
-    highcharter::hc_tooltip(shared = TRUE, xDateFormat = "%B %Y") |>
+    highcharter::hc_tooltip(sort = orden, table = TRUE) |>
+    highcharter::hc_tooltip(
+      shared = TRUE, xDateFormat = "%B %Y",
+      headerFormat = "<span style='font-size:11px;color:#5F6B7A'>{point.key}</span><table>",
+      pointFormat = paste0(
+        "<tr><td><span style='color:{series.color}'>\u25CF</span> {series.name}</td>",
+        "<td style='text-align:right;padding-left:12px'><b>{point.y}</b></td></tr>"
+      )
+    ) |>
     highcharter::hc_legend(align = "left", verticalAlign = "top", itemDistance = 18) |>
     highcharter::hc_plotOptions(
-      series = list(marker = list(enabled = FALSE), animation = animacion_graficos)
+      series = list(marker = list(enabled = FALSE, symbol = "circle"), animation = animacion_graficos)
     ) |>
     highcharter::hc_credits(enabled = TRUE, text = fuente_cmf)
 }
@@ -29,27 +40,42 @@ orden_visibles <- function(integrantes) {
   c(vis$cod_ifi[vis$rol == "foco"], vis$cod_ifi[vis$rol != "foco"])
 }
 
-# Barras horizontales del ranking. destacados: bancos que van con su color (la escalera); el resto, gris.
-grafico_ranking <- function(rk, destacados) {
+# Puntos del gráfico de ranking. destacados: bancos que van con su color (la escalera); el resto, gris. Lo
+# usan el dibujo inicial y la actualización por proxy al cambiar de banco (app.R).
+puntos_ranking <- function(rk, destacados) {
   nombre <- paste0(rk$posicion, ". ", rk$nombre)
   nombre[rk$rol == "foco"] <- paste0("<b>", nombre[rk$rol == "foco"], "</b>")
   puntos <- data.frame(
     name = nombre,
     y = rk$monto / 1e9,
+    cod = rk$cod_ifi,
+    pista = ifelse(rk$rol == "foco", "", "<br/><span style='color:#5F6B7A'>Clic para analizar</span>"),
     color = ifelse(rk$cod_ifi %in% destacados, color_banco(rk$cod_ifi), colores[["resto"]]),
     monto = vapply(rk$monto, monto_corto, ""),
     part = porcentaje(rk$participacion, 2),
     var = porcentaje(rk$var_m1, 1, signo = TRUE)
   )
+  highcharter::list_parse(puntos)
+}
+
+# Barras horizontales del ranking, con la serie "ranking" para poder actualizarla por proxy.
+grafico_ranking <- function(rk, destacados) {
   highcharter::highchart() |>
-    highcharter::hc_chart(type = "bar", spacingRight = 28) |>
-    highcharter::hc_xAxis(type = "category", labels = list(step = 1, style = list(color = "#1F2933"))) |>
+    highcharter::hc_chart(type = "bar", spacingRight = 28, animation = animacion_cambios) |>
+    # Nombres alineados a la izquierda dentro del espacio reservado para ellos.
+    highcharter::hc_xAxis(type = "category", labels = list(step = 1, align = "left", reserveSpace = TRUE,
+                                                           style = list(color = "#1F2933"))) |>
     highcharter::hc_yAxis(
       title = list(text = "Miles de millones de $"),
       labels = list(format = "{value:,.0f}", style = list(textOverflow = "none"))
     ) |>
     highcharter::hc_add_series(
-      name = "Monto", data = highcharter::list_parse(puntos), showInLegend = FALSE,
+      id = "ranking", name = "Monto", data = puntos_ranking(rk, destacados), showInLegend = FALSE,
+      # Clic en una barra: ese banco pasa a ser el analizado (www/escalera.js).
+      cursor = "pointer",
+      point = list(events = list(click = htmlwidgets::JS(
+        "function () { if (window.seleccionarBanco) window.seleccionarBanco(this.cod); }"
+      ))),
       borderRadius = 3, pointPadding = 0.06, groupPadding = 0.04,
       dataLabels = list(
         enabled = TRUE, format = "{point.part}",
@@ -61,16 +87,51 @@ grafico_ranking <- function(rk, destacados) {
       useHTML = TRUE, headerFormat = "<b>{point.key}</b><br/>",
       pointFormat = paste0(
         "Monto: <b>{point.monto}</b><br/>Participación: <b>{point.part}</b><br/>",
-        "Var. mensual: <b>{point.var}</b>"
+        "Var. mensual: <b>{point.var}</b>", "{point.pista}"
       )
     ) |>
     highcharter::hc_credits(enabled = TRUE, text = fuente_cmf, position = list(align = "left", x = 10))
 }
 
 # Líneas de la comparación. campo: "monto", "indice" o "participacion".
+# Etiqueta al final de una serie: solo el último punto con dato lleva dataLabel (punto de color y nombre en
+# color de texto). Las que chocan se separan en el navegador (separar_etiquetas, abajo).
+datos_con_etiqueta <- function(fecha, y) {
+  d <- puntos_tiempo(fecha, y)
+  k <- max(c(0, which(!is.na(y))))
+  if (k > 0) d[[k]] <- list(x = d[[k]][[1]], y = d[[k]][[2]], dataLabels = list(enabled = TRUE))
+  d
+}
+
+# Separa verticalmente las etiquetas finales que se montan (Highcharts ocultaría una). Se ejecuta en cada
+# render: parte de la posición calculada por Highcharts (alignAttr), así no acumula desplazamientos.
+separar_etiquetas <- htmlwidgets::JS(paste(
+  "function () {",
+  "  var ch = this, labs = [];",
+  "  ch.series.forEach(function (s) {",
+  "    if (!s.visible) return;",
+  "    s.points.forEach(function (p) {",
+  "      if (p.dataLabel && p.options.dataLabels && p.dataLabel.alignAttr) labs.push(p.dataLabel);",
+  "    });",
+  "  });",
+  "  if (labs.length < 2) return;",
+  "  labs.sort(function (a, b) { return a.alignAttr.y - b.alignAttr.y; });",
+  "  var h = 15, ys = labs.map(function (l) { return l.alignAttr.y; });",
+  "  for (var i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + h);",
+  "  var tope = ch.plotHeight - h / 2;",
+  "  if (ys[ys.length - 1] > tope) {",
+  "    ys[ys.length - 1] = tope;",
+  "    for (var j = ys.length - 2; j >= 0; j--) ys[j] = Math.min(ys[j], ys[j + 1] - h);",
+  "  }",
+  "  labs.forEach(function (l, i) { l.attr({ y: ys[i] }); });",
+  "}"
+))
+
 grafico_lineas <- function(s, campo, eje, decimales = 0, sufijo = "", divisor = 1,
                            sin_sistema = FALSE, eje_sistema = FALSE) {
   integrantes <- attr(s, "integrantes")
+  # Con eje del sistema a la derecha, las etiquetas finales chocarían con él: ahí se usa la leyenda.
+  al_final <- !eje_sistema
   if (sin_sistema) integrantes <- integrantes[integrantes$rol != "sistema", ]
   trazo <- trazos_bancos(orden_visibles(integrantes))
   orden <- c(integrantes$cod_ifi[integrantes$rol == "resto"], integrantes$cod_ifi[integrantes$rol != "resto"])
@@ -87,7 +148,7 @@ grafico_lineas <- function(s, campo, eje, decimales = 0, sufijo = "", divisor = 
   # Valores cercanos a cero necesitan decimales para no leerse "0, -0, -0".
   maximo <- max(abs(destacados / divisor), na.rm = TRUE)
   if (is.finite(maximo) && maximo < 10) decimales <- max(decimales, if (maximo < 1) 2 else 1)
-  hc <- base_tiempo() |>
+  hc <- base_tiempo(orden = TRUE) |>
     highcharter::hc_tooltip(valueDecimals = decimales, valueSuffix = sufijo_tooltip)
   formato_eje <- paste0("{value:,.", decimales, "f}", sufijo)
   if (eje_sistema) {
@@ -108,21 +169,37 @@ grafico_lineas <- function(s, campo, eje, decimales = 0, sufijo = "", divisor = 
     hc <- do.call(highcharter::hc_yAxis, c(list(hc), eje_y))
   }
 
+  if (al_final) {
+    visibles <- integrantes$cod_ifi[!integrantes$rol %in% c("resto", "sistema")]
+    nombres <- unique(s$nombre[s$cod_ifi %in% visibles])
+    hc <- hc |>
+      highcharter::hc_chart(marginRight = 24 + 7 * max(nchar(nombres), 8),
+                            events = list(render = separar_etiquetas)) |>
+      highcharter::hc_legend(enabled = FALSE)
+  }
+
   for (cod in orden) {
     df <- s[s$cod_ifi == cod, ]
     if (!nrow(df)) next
     rol <- integrantes$rol[integrantes$cod_ifi == cod]
     hc <- hc |> highcharter::hc_add_series(
-      type = "line", name = df$nombre[1], data = puntos_tiempo(df$fecha, df[[campo]] / divisor),
+      type = "line", name = df$nombre[1],
+      data = if (al_final && rol != "resto") datos_con_etiqueta(df$fecha, df[[campo]] / divisor) else
+        puntos_tiempo(df$fecha, df[[campo]] / divisor),
+      dataLabels = list(
+        enabled = FALSE, align = "left", verticalAlign = "middle", x = 6, crop = FALSE, overflow = "allow",
+        allowOverlap = TRUE, useHTML = FALSE,
+        format = "<span style=\"color:{series.color}\">\u25CF</span> {series.name}",
+        style = list(color = "#1F2933", textOutline = "none", fontSize = "12px",
+                     fontWeight = if (rol == "foco") "700" else "500")
+      ),
       color = color_serie(cod, rol),
       lineWidth = switch(rol, foco = 4, resto = 1.2, 2.5),
       dashStyle = if (rol == "sistema") "ShortDot" else if (isTRUE(trazo[cod] == "Dash")) "Dash" else "Solid",
       zIndex = switch(rol, foco = 5, resto = 0, 3),
       enableMouseTracking = rol != "resto",
-      showInLegend = rol != "resto",
+      showInLegend = !al_final && rol != "resto",
       states = list(inactive = list(opacity = if (rol == "resto") 1 else 0.35)),
-      # Bancos de la escalera que no son vecinos directos: en la leyenda, ocultos hasta que se activen.
-      visible = rol != "escalera",
       yAxis = if (eje_sistema && rol == "sistema") 1 else 0
     )
   }
@@ -188,42 +265,50 @@ grafico_brecha <- function(s, resumen, modo) {
       ))
   }
 
-  # Pares (a - b): en vecinos, superior - foco y foco - inferior; en bancos, comparado - foco.
-  pares <- data.frame(a = character(), b = character(), otro = character(), etiqueta = character())
-  if (modo == "vecinos") {
-    if (!is.null(resumen$superior)) {
-      sup <- resumen$superior$cod_ifi
-      etiqueta <- paste0("Distancia al superior (", nombre(sup), ")")
-      pares <- rbind(pares, data.frame(a = sup, b = foco, otro = sup, etiqueta = etiqueta))
-    }
-    if (!is.null(resumen$inferior)) {
-      inf <- resumen$inferior$cod_ifi
-      etiqueta <- paste0("Ventaja sobre el inferior (", nombre(inf), ")")
-      pares <- rbind(pares, data.frame(a = foco, b = inf, otro = inf, etiqueta = etiqueta))
-    }
-  }
-  if (modo == "bancos") {
-    for (cod in integrantes$cod_ifi[integrantes$rol == "comparado"]) {
-      etiqueta <- paste(nombre(cod), "menos", nombre(foco))
-      pares <- rbind(pares, data.frame(a = cod, b = foco, otro = cod, etiqueta = etiqueta))
-    }
-  }
+  # Brecha = otro menos el analizado: el cero es el banco analizado. Arriba (positivo) lo que le falta para
+  # alcanzar al superior; abajo (negativo) su ventaja sobre el inferior. Si una curva cruza el cero hubo
+  # un adelantamiento. En bancos, cada comparado menos el analizado.
+  otros <- character()
+  if (modo == "vecinos") otros <- integrantes$cod_ifi[integrantes$cod_ifi != foco]
+  if (modo == "bancos") otros <- integrantes$cod_ifi[integrantes$rol == "comparado"]
 
   hc <- hc |>
     highcharter::hc_yAxis(
-      title = list(text = "Miles de millones de $"), labels = list(format = "{value:,.0f}"),
-      plotLines = list(list(value = 0, width = 1, color = "#9AA5B1"))
+      title = list(text = paste("Diferencia con", nombre(foco), "(miles de millones de $)")),
+      labels = list(format = "{value:,.0f}"),
+      plotLines = list(list(
+        value = 0, width = 1.5, color = "#1F2933", zIndex = 4,
+        label = list(text = paste0("<b>", nombre(foco), "</b>"), align = "left", x = 4, y = -6,
+                     style = list(color = "#1F2933", fontSize = "11px"))
+      ))
     ) |>
-    highcharter::hc_tooltip(valueDecimals = 0, valueSuffix = " mil millones")
-  if (!nrow(pares)) {
+    highcharter::hc_tooltip(valueDecimals = 0, valueSuffix = " mil millones") |>
+    highcharter::hc_legend(enabled = FALSE)
+  if (modo == "vecinos") {
+    hc <- hc |> highcharter::hc_subtitle(
+      text = paste("Sobre la línea: lo que le falta a", nombre(foco), "para alcanzar al de arriba.",
+                   "Bajo la línea: su ventaja sobre el de abajo."),
+      align = "left", style = list(fontSize = "12px", color = colores[["texto_suave"]])
+    )
+  }
+  if (!length(otros)) {
     return(hc |> highcharter::hc_subtitle(text = "Elige bancos para comparar en el panel lateral."))
   }
-  trazo <- trazos_bancos(pares$otro)
-  for (i in seq_len(nrow(pares))) {
-    d <- diferencia(s, pares$a[i], pares$b[i], "monto")
+  nombres <- vapply(otros, nombre, "")
+  hc <- hc |> highcharter::hc_chart(marginRight = 24 + 7 * max(nchar(nombres), 8),
+                                    events = list(render = separar_etiquetas))
+  trazo <- trazos_bancos(otros)
+  for (cod in otros) {
+    d <- diferencia(s, cod, foco, "monto")
+    col <- color_banco(cod)
     hc <- hc |> highcharter::hc_add_series(
-      type = "line", name = pares$etiqueta[i], data = puntos_tiempo(d$fecha, d$y / 1e9),
-      color = color_banco(pares$otro[i]), lineWidth = 3, dashStyle = trazo[[pares$otro[i]]]
+      type = "area", name = nombre(cod), data = datos_con_etiqueta(d$fecha, d$y / 1e9),
+      color = col, lineWidth = 2.5, fillOpacity = 0.14, threshold = 0, dashStyle = trazo[[cod]],
+      dataLabels = list(
+        enabled = FALSE, align = "left", verticalAlign = "middle", x = 6, crop = FALSE, overflow = "allow",
+        allowOverlap = TRUE, format = "<span style=\"color:{series.color}\">\u25CF</span> {series.name}",
+        style = list(color = "#1F2933", textOutline = "none", fontSize = "12px", fontWeight = "500")
+      )
     )
   }
   hc
@@ -371,11 +456,18 @@ tabla_ranking <- function(rk, comp) {
     pagination = FALSE, highlight = TRUE, compact = TRUE, borderless = TRUE, sortable = TRUE,
     defaultColDef = reactable::colDef(headerClass = "tabla-encabezado", sortNALast = TRUE),
     rowStyle = function(i) {
-      if (d$rol[i] != "foco") return(NULL)
+      if (d$rol[i] != "foco") return(list(cursor = "pointer"))
       list(background = "rgba(31, 41, 51, 0.06)", fontWeight = 650,
            boxShadow = paste0("inset 4px 0 0 ", color_banco(d$cod_ifi[i])))
     },
     details = function(i) detalle_composicion(d[i, ], m),
+    # Clic en una fila: ese banco pasa a ser el analizado. La flecha de detalle conserva su función.
+    onClick = htmlwidgets::JS(paste(
+      "function (rowInfo, column) {",
+      "  if (column.id === '.details') { rowInfo.toggleRowExpanded(); return; }",
+      "  if (window.seleccionarBanco) window.seleccionarBanco(rowInfo.values.cod_ifi);",
+      "}"
+    )),
     columns = columnas
   )
 }
@@ -404,9 +496,9 @@ ultimo_marcado <- function(puntos, color) {
   puntos
 }
 
-# Participación conjunta de la escalera en 24 meses (área en el color de acento).
-grafico_mini_conjunta <- function(sc) {
-  col <- colores[["acento"]]
+# Participación del banco en 24 meses (área en su color). Datos y rango del eje del mini gráfico; los usan
+# el dibujo inicial y la actualización por proxy (app.R).
+mini_participacion_datos <- function(sc, color) {
   sc <- sc[!is.na(sc$participacion), ]
   puntos <- lapply(seq_len(nrow(sc)), function(i) {
     list(x = highcharter::datetime_to_timestamp(sc$fecha[i]), y = 100 * sc$participacion[i],
@@ -414,11 +506,19 @@ grafico_mini_conjunta <- function(sc) {
   })
   rango <- range(100 * sc$participacion)
   holgura <- max(0.1, diff(rango) * 0.15)
+  list(data = ultimo_marcado(puntos, color), min = rango[1] - holgura,
+       max = rango[2] + holgura)
+}
+
+grafico_mini_participacion <- function(sc, color) {
+  col <- color
+  d <- mini_participacion_datos(sc, color)
   mini_base() |>
+    highcharter::hc_chart(animation = animacion_cambios) |>
     highcharter::hc_yAxis(visible = FALSE, startOnTick = FALSE, endOnTick = FALSE,
-                          min = rango[1] - holgura, max = rango[2] + holgura) |>
-    highcharter::hc_add_series(type = "area", name = "Participación conjunta",
-                               data = ultimo_marcado(puntos, col),
+                          min = d$min, max = d$max) |>
+    highcharter::hc_add_series(type = "area", id = "participacion", name = "Participación",
+                               data = d$data,
                                color = col, lineWidth = 2, fillOpacity = 0.10, softThreshold = TRUE,
                                tooltip = list(pointFormat = "<b>{point.texto}</b>"))
 }

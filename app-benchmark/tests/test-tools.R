@@ -40,7 +40,7 @@ br <- v$escalera$brechas
 sup <- br[[which(vapply(br, function(b) b$abajo == "Internacional", TRUE))]]
 inf <- br[[which(vapply(br, function(b) b$arriba == "Internacional", TRUE))]]
 stopifnot(
-  length(v$escalera$bancos) == 5, sup$arriba == "Consorcio", sup$tendencia == "estable",
+  length(v$escalera$bancos) == 3, sup$arriba == "Consorcio", sup$tendencia == "estable",
   sup$monto == "MM$ 1.086.485", inf$tendencia == "cambio de orden",
   v$puesto_hace_12_meses$hoy == "9° de 17", grepl("^11° de 17", v$puesto_hace_12_meses$hace_12_meses),
   grepl("Security", v$puesto_hace_12_meses$salieron), v$puesto_hace_12_meses$entraron == "Tanner"
